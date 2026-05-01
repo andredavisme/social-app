@@ -18,14 +18,31 @@ window.login = async () => {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const msg = document.getElementById('loginMsg');
-  msg.textContent = 'Signing in...';
-  msg.className = 'msg';
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    msg.textContent = error.message;
+
+  if (!email || !password) {
+    msg.textContent = 'Please enter your email and password.';
     msg.className = 'msg error';
     return;
   }
+
+  msg.textContent = 'Signing in...';
+  msg.className = 'msg';
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    // Friendly messages for common login errors
+    if (error.message.includes('Email not confirmed')) {
+      msg.innerHTML = '📧 Your email hasn\'t been confirmed yet.<br/>Check your inbox (and spam folder) for a confirmation link.';
+    } else if (error.message.includes('Invalid login credentials')) {
+      msg.textContent = 'Incorrect email or password. Please try again.';
+    } else {
+      msg.textContent = error.message;
+    }
+    msg.className = 'msg error';
+    return;
+  }
+
   window.location.href = 'feed.html';
 };
 
@@ -36,8 +53,19 @@ window.signup = async () => {
   const password = document.getElementById('signupPassword').value;
   const msg = document.getElementById('signupMsg');
 
+  // Client-side validation
   if (username.length < 3) {
     msg.textContent = 'Username must be at least 3 characters.';
+    msg.className = 'msg error';
+    return;
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    msg.textContent = 'Username can only contain letters, numbers, and underscores.';
+    msg.className = 'msg error';
+    return;
+  }
+  if (!email.includes('@')) {
+    msg.textContent = 'Please enter a valid email address.';
     msg.className = 'msg error';
     return;
   }
@@ -47,8 +75,23 @@ window.signup = async () => {
     return;
   }
 
-  msg.textContent = 'Creating account...';
+  msg.textContent = 'Checking availability...';
   msg.className = 'msg';
+
+  // Check if username is already taken before attempting signup
+  const { data: existingUser } = await supabase
+    .from('profiles')
+    .select('username')
+    .eq('username', username)
+    .maybeSingle();
+
+  if (existingUser) {
+    msg.textContent = `The username "${username}" is already taken. Please choose another.`;
+    msg.className = 'msg error';
+    return;
+  }
+
+  msg.textContent = 'Creating account...';
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -57,16 +100,38 @@ window.signup = async () => {
   });
 
   if (error) {
-    msg.textContent = error.message;
+    // Supabase returns a generic message for duplicate emails to prevent enumeration.
+    // We surface a helpful message either way.
+    if (
+      error.message.toLowerCase().includes('already registered') ||
+      error.message.toLowerCase().includes('already exists') ||
+      error.message.toLowerCase().includes('user already')
+    ) {
+      msg.innerHTML = 'An account with that email already exists.<br/>Please <a href="#" onclick="showTab(\'login\')" style="color:#1877f2">log in</a> instead.';
+    } else {
+      msg.textContent = error.message;
+    }
     msg.className = 'msg error';
     return;
   }
 
-  // Supabase may auto-confirm in dev mode — check for session
-  if (data.session) {
-    window.location.href = 'feed.html';
-  } else {
-    msg.textContent = '✅ Account created! Check your email to confirm, then log in.';
-    msg.className = 'msg success';
+  // Supabase v2 returns a user but no session when email confirmation is required.
+  // identities being empty means the email is already registered (Supabase security behavior).
+  if (data.user && data.user.identities && data.user.identities.length === 0) {
+    msg.innerHTML = 'An account with that email already exists.<br/>Please <a href="#" onclick="showTab(\'login\')" style="color:#1877f2">log in</a> instead.';
+    msg.className = 'msg error';
+    return;
   }
+
+  // Success — email confirmation required
+  document.getElementById('signupTab').innerHTML = `
+    <div class="confirm-box">
+      <div style="font-size:2.5rem;margin-bottom:12px">📧</div>
+      <h3 style="margin-bottom:8px">Check your email!</h3>
+      <p>We sent a confirmation link to:</p>
+      <p style="font-weight:700;margin:8px 0;color:#1877f2">${email}</p>
+      <p style="color:#666;font-size:.9rem">Click the link in that email to activate your account, then come back and log in.</p>
+      <p style="color:#888;font-size:.85rem;margin-top:12px">Don't see it? Check your spam folder.</p>
+      <button onclick="showTab('login')" style="margin-top:16px">Go to Login</button>
+    </div>`;
 };
