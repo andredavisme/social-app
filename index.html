@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialApp</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">📸 SocialApp</a>
+    <div class="nav-links" id="navLinks">
+      <a href="feed.html">Feed</a>
+      <a href="profile.html">Profile</a>
+      <a href="messages.html">Messages</a>
+      <a href="settings.html">Settings</a>
+      <a href="#" id="adminLink" style="display:none">Admin</a>
+      <button id="logoutBtn" style="display:none">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="auth-box">
+      <h2>Welcome to SocialApp</h2>
+      <p>Sign in or create an account to get started.</p>
+
+      <div id="authTabs">
+        <button class="tab-btn active" onclick="showTab('login')">Login</button>
+        <button class="tab-btn" onclick="showTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Login -->
+      <div id="loginTab">
+        <input type="email" id="loginEmail" placeholder="Email" />
+        <input type="password" id="loginPassword" placeholder="Password" />
+        <button onclick="login()">Login</button>
+        <p id="loginMsg" class="msg"></p>
+      </div>
+
+      <!-- Signup -->
+      <div id="signupTab" style="display:none">
+        <input type="text" id="signupUsername" placeholder="Username (min 3 chars)" />
+        <input type="text" id="signupFullName" placeholder="Full Name" />
+        <input type="email" id="signupEmail" placeholder="Email" />
+        <input type="password" id="signupPassword" placeholder="Password" />
+        <button onclick="signup()">Create Account</button>
+        <p id="signupMsg" class="msg"></p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/nav.js"></script>
+</body>
+</html>

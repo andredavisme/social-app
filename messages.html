@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Messages – SocialApp</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">📸 SocialApp</a>
+    <div class="nav-links">
+      <a href="feed.html">Feed</a>
+      <a href="profile.html">Profile</a>
+      <a href="messages.html">Messages</a>
+      <a href="settings.html">Settings</a>
+      <a href="admin.html" id="adminLink" style="display:none">Admin</a>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container messages-layout">
+    <div class="card inbox" id="inbox">
+      <h3>Conversations</h3>
+      <input type="text" id="dmSearch" placeholder="Find user to message..." oninput="searchUsers()" />
+      <div id="userResults"></div>
+      <hr />
+      <div id="conversationList"></div>
+    </div>
+    <div class="card thread" id="thread">
+      <div id="threadHeader"><h3>Select a conversation</h3></div>
+      <div id="threadMessages"></div>
+      <div id="replyBox" style="display:none">
+        <input type="text" id="dmBody" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/supabase.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/messages.js"></script>
+</body>
+</html>

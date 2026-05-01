@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings – SocialApp</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">📸 SocialApp</a>
+    <div class="nav-links">
+      <a href="feed.html">Feed</a>
+      <a href="profile.html">Profile</a>
+      <a href="messages.html">Messages</a>
+      <a href="settings.html">Settings</a>
+      <a href="admin.html" id="adminLink" style="display:none">Admin</a>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="card">
+      <h2>Edit Profile</h2>
+      <div class="avatar-edit">
+        <img id="currentAvatar" src="https://via.placeholder.com/100" alt="Avatar" />
+        <label for="avatarUpload" class="upload-label">Change Photo</label>
+        <input type="file" id="avatarUpload" accept="image/*" style="display:none" onchange="uploadAvatar(event)" />
+      </div>
+      <input type="text" id="settingsUsername" placeholder="Username" />
+      <input type="text" id="settingsFullName" placeholder="Full Name" />
+      <textarea id="settingsBio" placeholder="Bio"></textarea>
+      <button onclick="saveProfile()">Save Changes</button>
+      <p id="settingsMsg" class="msg"></p>
+    </div>
+  </main>
+
+  <script src="js/supabase.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>

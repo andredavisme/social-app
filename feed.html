@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feed – SocialApp</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">📸 SocialApp</a>
+    <div class="nav-links">
+      <a href="feed.html">Feed</a>
+      <a href="profile.html">Profile</a>
+      <a href="messages.html">Messages</a>
+      <a href="settings.html">Settings</a>
+      <a href="admin.html" id="adminLink" style="display:none">Admin</a>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- New Post -->
+    <div class="card post-composer">
+      <h3>New Post</h3>
+      <textarea id="postCaption" placeholder="What's on your mind?"></textarea>
+      <input type="file" id="postImage" accept="image/*" />
+      <button onclick="submitPost()">Post</button>
+      <p id="postMsg" class="msg"></p>
+    </div>
+
+    <!-- Feed -->
+    <div id="feedContainer"></div>
+  </main>
+
+  <script src="js/supabase.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/feed.js"></script>
+</body>
+</html>
