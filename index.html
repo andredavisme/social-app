@@ -4,19 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SocialApp</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <nav class="navbar">
     <a href="index.html" class="logo">📸 SocialApp</a>
-    <div class="nav-links" id="navLinks">
-      <a href="feed.html">Feed</a>
-      <a href="profile.html">Profile</a>
-      <a href="messages.html">Messages</a>
-      <a href="settings.html">Settings</a>
-      <a href="#" id="adminLink" style="display:none">Admin</a>
-      <button id="logoutBtn" style="display:none">Logout</button>
-    </div>
   </nav>
 
   <main class="container">
@@ -42,15 +35,14 @@
         <input type="text" id="signupUsername" placeholder="Username (min 3 chars)" />
         <input type="text" id="signupFullName" placeholder="Full Name" />
         <input type="email" id="signupEmail" placeholder="Email" />
-        <input type="password" id="signupPassword" placeholder="Password" />
+        <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" />
         <button onclick="signup()">Create Account</button>
         <p id="signupMsg" class="msg"></p>
       </div>
     </div>
   </main>
 
-  <script src="js/supabase.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/nav.js"></script>
+  <script type="module" src="js/supabase.js"></script>
+  <script type="module" src="js/auth.js"></script>
 </body>
 </html>

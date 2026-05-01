@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Messages – SocialApp</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -20,25 +21,24 @@
   </nav>
 
   <main class="container messages-layout">
-    <div class="card inbox" id="inbox">
+    <div class="card inbox">
       <h3>Conversations</h3>
       <input type="text" id="dmSearch" placeholder="Find user to message..." oninput="searchUsers()" />
       <div id="userResults"></div>
       <hr />
       <div id="conversationList"></div>
     </div>
-    <div class="card thread" id="thread">
+    <div class="card thread">
       <div id="threadHeader"><h3>Select a conversation</h3></div>
       <div id="threadMessages"></div>
       <div id="replyBox" style="display:none">
-        <input type="text" id="dmBody" placeholder="Type a message..." />
+        <input type="text" id="dmBody" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()" />
         <button onclick="sendMessage()">Send</button>
       </div>
     </div>
   </main>
 
-  <script src="js/supabase.js"></script>
-  <script src="js/nav.js"></script>
-  <script src="js/messages.js"></script>
+  <script type="module" src="js/nav.js"></script>
+  <script type="module" src="js/messages.js"></script>
 </body>
 </html>

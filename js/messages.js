@@ -5,36 +5,40 @@ let activeReceiverId = null;
 
 async function init() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
+  if (!session) { window.location.replace('index.html'); return; }
   currentUser = session.user;
   loadConversations();
+
+  // Support opening a DM directly from profile page
+  const params = new URLSearchParams(window.location.search);
+  const dmId = params.get('dm');
+  if (dmId) {
+    const { data: p } = await supabase.from('profiles').select('username').eq('id', dmId).single();
+    if (p) openThread(dmId, p.username);
+  }
 }
 
 async function loadConversations() {
-  const { data: msgs } = await supabase
-    .from('messages')
-    .select('sender_id, receiver_id, profiles!messages_sender_id_fkey(username, avatar_url)')
-    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
-    .order('created_at', { ascending: false });
-
-  const seen = new Set();
+  const { data: sent } = await supabase.from('messages').select('receiver_id').eq('sender_id', currentUser.id);
+  const { data: received } = await supabase.from('messages').select('sender_id').eq('receiver_id', currentUser.id);
+  const ids = new Set([
+    ...(sent||[]).map(m => m.receiver_id),
+    ...(received||[]).map(m => m.sender_id)
+  ]);
   const list = document.getElementById('conversationList');
   list.innerHTML = '';
-  for (const m of msgs || []) {
-    const otherId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
-    if (seen.has(otherId)) continue;
-    seen.add(otherId);
-    const { data: p } = await supabase.from('profiles').select('username, avatar_url').eq('id', otherId).single();
+  for (const id of ids) {
+    const { data: p } = await supabase.from('profiles').select('id, username, avatar_url').eq('id', id).single();
     if (!p) continue;
     const el = document.createElement('div');
     el.className = 'convo-item';
-    el.innerHTML = `<img src="${p.avatar_url || 'https://via.placeholder.com/36'}" /><span>${p.username}</span>`;
-    el.onclick = () => openThread(otherId, p.username);
+    el.innerHTML = `<img src="${p.avatar_url || 'https://placehold.co/36'}" /><span>${p.username}</span>`;
+    el.onclick = () => openThread(p.id, p.username);
     list.appendChild(el);
   }
 }
 
-async function openThread(receiverId, username) {
+window.openThread = async function openThread(receiverId, username) {
   activeReceiverId = receiverId;
   document.getElementById('threadHeader').innerHTML = `<h3>💬 ${username}</h3>`;
   document.getElementById('replyBox').style.display = 'flex';
@@ -44,15 +48,11 @@ async function openThread(receiverId, username) {
     .select('*')
     .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`)
     .order('created_at');
-  container.innerHTML = '';
-  for (const m of msgs || []) {
-    const div = document.createElement('div');
-    div.className = `msg-bubble ${m.sender_id === currentUser.id ? 'sent' : 'received'}`;
-    div.textContent = m.body;
-    container.appendChild(div);
-  }
+  container.innerHTML = (msgs||[]).map(m =>
+    `<div class="msg-bubble ${m.sender_id === currentUser.id ? 'sent' : 'received'}">${m.body}</div>`
+  ).join('');
   container.scrollTop = container.scrollHeight;
-}
+};
 
 window.sendMessage = async () => {
   const body = document.getElementById('dmBody').value.trim();
@@ -61,6 +61,7 @@ window.sendMessage = async () => {
   document.getElementById('dmBody').value = '';
   const { data: p } = await supabase.from('profiles').select('username').eq('id', activeReceiverId).single();
   openThread(activeReceiverId, p?.username);
+  loadConversations();
 };
 
 window.searchUsers = async () => {
@@ -72,7 +73,7 @@ window.searchUsers = async () => {
   for (const u of users || []) {
     const el = document.createElement('div');
     el.className = 'convo-item';
-    el.innerHTML = `<img src="${u.avatar_url || 'https://via.placeholder.com/36'}" /><span>${u.username}</span>`;
+    el.innerHTML = `<img src="${u.avatar_url || 'https://placehold.co/36'}" /><span>${u.username}</span>`;
     el.onclick = () => { document.getElementById('dmSearch').value = ''; results.innerHTML = ''; openThread(u.id, u.username); };
     results.appendChild(el);
   }

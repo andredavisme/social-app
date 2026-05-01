@@ -2,10 +2,12 @@ import { supabase } from './supabase.js';
 
 async function init() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
+  if (!session) { window.location.replace('index.html'); return; }
+
   const params = new URLSearchParams(window.location.search);
   const username = params.get('u');
   let profile;
+
   if (username) {
     const { data } = await supabase.from('profiles').select('*').eq('username', username).single();
     profile = data;
@@ -13,6 +15,7 @@ async function init() {
     const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
     profile = data;
   }
+
   if (!profile) { document.getElementById('profileHeader').innerHTML = '<p>User not found.</p>'; return; }
 
   const { data: followers } = await supabase.from('follows').select('follower_id').eq('following_id', profile.id);
@@ -23,17 +26,20 @@ async function init() {
   const isFollowing = followers?.some(f => f.follower_id === session.user.id);
 
   document.getElementById('profileHeader').innerHTML = `
-    <img src="${profile.avatar_url || 'https://via.placeholder.com/90'}" alt="avatar" />
+    <img src="${profile.avatar_url || 'https://placehold.co/90'}" alt="avatar" />
     <div class="profile-info">
       <h2>${profile.username}</h2>
       ${profile.full_name ? `<p>${profile.full_name}</p>` : ''}
-      ${profile.bio ? `<p>${profile.bio}</p>` : ''}
+      ${profile.bio ? `<p style="color:#555;margin-top:4px">${profile.bio}</p>` : ''}
       <div class="profile-stats">
         <div><span>${posts?.length || 0}</span> posts</div>
         <div><span>${followers?.length || 0}</span> followers</div>
         <div><span>${following?.length || 0}</span> following</div>
       </div>
-      ${!isMe ? `<button class="follow-btn${isFollowing?' following':''}" onclick="toggleFollow('${profile.id}', ${isFollowing})">${isFollowing ? 'Unfollow' : 'Follow'}</button>` : '<a href="settings.html"><button>Edit Profile</button></a>'}
+      ${!isMe
+        ? `<button class="follow-btn${isFollowing ? ' following' : ''}" onclick="toggleFollow('${profile.id}', ${isFollowing})">${isFollowing ? 'Unfollow' : 'Follow'}</button>
+           <a href="messages.html?dm=${profile.id}"><button style="margin-left:8px">Message</button></a>`
+        : '<a href="settings.html"><button style="margin-top:10px">Edit Profile</button></a>'}
     </div>`;
 
   const postsEl = document.getElementById('profilePosts');
@@ -42,9 +48,9 @@ async function init() {
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
-      ${post.image_url ? `<img src="${post.image_url}" style="width:100%;border-radius:8px;margin-bottom:8px" />` : ''}
+      ${post.image_url ? `<img src="${post.image_url}" style="width:100%;border-radius:8px;margin-bottom:8px;max-height:400px;object-fit:cover" />` : ''}
       <p>${post.caption || ''}</p>
-      <small>${new Date(post.created_at).toLocaleDateString()}</small>`;
+      <small style="color:#888">${new Date(post.created_at).toLocaleDateString()}</small>`;
     postsEl.appendChild(card);
   }
 }

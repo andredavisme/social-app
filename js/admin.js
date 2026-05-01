@@ -2,9 +2,9 @@ import { supabase } from './supabase.js';
 
 async function init() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
+  if (!session) { window.location.replace('index.html'); return; }
   const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single();
-  if (!profile?.is_admin) { window.location.href = 'feed.html'; return; }
+  if (!profile?.is_admin) { window.location.replace('feed.html'); return; }
   loadUsers();
 }
 
@@ -12,7 +12,9 @@ window.adminTab = (tab) => {
   document.getElementById('adminUsers').style.display = tab === 'users' ? 'block' : 'none';
   document.getElementById('adminPosts').style.display = tab === 'posts' ? 'block' : 'none';
   document.getElementById('adminMessages').style.display = tab === 'messages' ? 'block' : 'none';
-  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['users','posts','messages'].indexOf(tab) === i));
+  document.querySelectorAll('.admin-tabs .tab-btn').forEach((b, i) =>
+    b.classList.toggle('active', ['users','posts','messages'].indexOf(tab) === i)
+  );
   if (tab === 'posts') loadPosts();
   if (tab === 'messages') loadMessages();
 };
@@ -25,16 +27,11 @@ async function loadUsers() {
     const row = document.createElement('div');
     row.className = 'admin-user-row';
     row.innerHTML = `
-      <div style="display:flex;align-items:center">
-        <img src="${u.avatar_url || 'https://via.placeholder.com/36'}" alt="" />
-        <div>
-          <strong>${u.username}</strong><br/>
-          <small>${u.full_name || ''} ${u.is_admin ? '🛡️ Admin' : ''}</small>
-        </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="${u.avatar_url || 'https://placehold.co/36'}" style="width:36px;height:36px;border-radius:50%" />
+        <div><strong>${u.username}</strong><br/><small>${u.full_name || ''} ${u.is_admin ? '🛡️ Admin' : ''}</small></div>
       </div>
-      <div>
-        <button class="ban-btn" onclick="toggleAdmin('${u.id}', ${u.is_admin})">${u.is_admin ? 'Revoke Admin' : 'Make Admin'}</button>
-      </div>`;
+      <button class="ban-btn" onclick="toggleAdmin('${u.id}', ${u.is_admin})">${u.is_admin ? 'Revoke Admin' : 'Make Admin'}</button>`;
     list.appendChild(row);
   }
 }

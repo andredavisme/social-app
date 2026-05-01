@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Settings – SocialApp</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -23,7 +24,7 @@
     <div class="card">
       <h2>Edit Profile</h2>
       <div class="avatar-edit">
-        <img id="currentAvatar" src="https://via.placeholder.com/100" alt="Avatar" />
+        <img id="currentAvatar" src="https://placehold.co/100" alt="Avatar" />
         <label for="avatarUpload" class="upload-label">Change Photo</label>
         <input type="file" id="avatarUpload" accept="image/*" style="display:none" onchange="uploadAvatar(event)" />
       </div>
@@ -35,8 +36,7 @@
     </div>
   </main>
 
-  <script src="js/supabase.js"></script>
-  <script src="js/nav.js"></script>
-  <script src="js/settings.js"></script>
+  <script type="module" src="js/nav.js"></script>
+  <script type="module" src="js/settings.js"></script>
 </body>
 </html>
