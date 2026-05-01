@@ -1,5 +1,7 @@
 import { supabase } from './supabase.js';
 
+const DEFAULT_AVATAR = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#e4e6eb"/><circle cx="50" cy="38" r="18" fill="#bcc0c4"/><ellipse cx="50" cy="85" rx="30" ry="22" fill="#bcc0c4"/></svg>`);
+
 let currentUser = null;
 
 async function init() {
@@ -57,18 +59,35 @@ async function loadFeed() {
 }
 
 async function buildPostCard(post) {
-  const { data: likes } = await supabase.from('likes').select('user_id').eq('post_id', post.id);
-  const { data: comments } = await supabase.from('comments').select('*, profiles(username)').eq('post_id', post.id).order('created_at');
-  const liked = likes?.some(l => l.user_id === currentUser?.id);
-  const avatar = post.profiles?.avatar_url || 'https://placehold.co/40';
+  const { data: postLikes } = await supabase.from('likes').select('user_id').eq('post_id', post.id);
+  const { data: comments } = await supabase
+    .from('comments')
+    .select('*, profiles(username), comment_likes(user_id)')
+    .eq('post_id', post.id)
+    .order('created_at');
+
+  const liked = postLikes?.some(l => l.user_id === currentUser?.id);
+  const avatar = post.profiles?.avatar_url || DEFAULT_AVATAR;
   const timeAgo = new Date(post.created_at).toLocaleDateString();
 
   const card = document.createElement('div');
   card.className = 'card post-card';
   card.id = `post-${post.id}`;
+
+  const commentsHtml = (comments || []).map(c => {
+    const cLiked = c.comment_likes?.some(l => l.user_id === currentUser?.id);
+    const cLikeCount = c.comment_likes?.length || 0;
+    return `<div class="comment-item" id="comment-${c.id}">
+      <strong>${c.profiles?.username}:</strong> ${c.body}
+      <button class="comment-like-btn${cLiked ? ' liked' : ''}" onclick="toggleCommentLike('${c.id}', ${cLiked})">
+        ♥ <span id="clikes-${c.id}">${cLikeCount > 0 ? cLikeCount : ''}</span>
+      </button>
+    </div>`;
+  }).join('');
+
   card.innerHTML = `
     <div class="post-header">
-      <img src="${avatar}" alt="avatar" />
+      <img src="${avatar}" alt="avatar" onerror="this.src='${DEFAULT_AVATAR}'" />
       <div>
         <div class="username"><a href="profile.html?u=${post.profiles?.username}" style="text-decoration:none;color:inherit">${post.profiles?.username || 'Unknown'}</a></div>
         <div class="time">${timeAgo}</div>
@@ -78,10 +97,10 @@ async function buildPostCard(post) {
     ${post.caption ? `<div class="post-caption">${post.caption}</div>` : ''}
     <div class="post-actions">
       <button class="like-btn${liked ? ' liked' : ''}" onclick="toggleLike('${post.id}', ${liked})">❤️</button>
-      <span class="like-count" id="likes-${post.id}">${likes?.length || 0} likes</span>
+      <span class="like-count" id="likes-${post.id}">${postLikes?.length || 0} likes</span>
     </div>
     <div class="comments-section">
-      <div id="comments-${post.id}">${(comments||[]).map(c => `<div class="comment-item"><strong>${c.profiles?.username}:</strong> ${c.body}</div>`).join('')}</div>
+      <div id="comments-${post.id}">${commentsHtml}</div>
       <div class="comment-form">
         <input type="text" id="comment-input-${post.id}" placeholder="Add a comment..." onkeydown="if(event.key==='Enter')submitComment('${post.id}')" />
         <button onclick="submitComment('${post.id}')">Post</button>
@@ -105,6 +124,24 @@ window.toggleLike = async (postId, isLiked) => {
   document.getElementById(`likes-${postId}`).textContent = `${likes?.length || 0} likes`;
 };
 
+window.toggleCommentLike = async (commentId, isLiked) => {
+  if (!currentUser) return;
+  if (isLiked) {
+    await supabase.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', currentUser.id);
+  } else {
+    await supabase.from('comment_likes').insert({ comment_id: commentId, user_id: currentUser.id });
+  }
+  const { data: likes } = await supabase.from('comment_likes').select('user_id').eq('comment_id', commentId);
+  const newLiked = likes?.some(l => l.user_id === currentUser.id);
+  const btn = document.querySelector(`#comment-${commentId} .comment-like-btn`);
+  if (btn) {
+    btn.className = `comment-like-btn${newLiked ? ' liked' : ''}`;
+    btn.setAttribute('onclick', `toggleCommentLike('${commentId}', ${newLiked})`);
+    const countEl = document.getElementById(`clikes-${commentId}`);
+    if (countEl) countEl.textContent = likes?.length > 0 ? likes.length : '';
+  }
+};
+
 window.submitComment = async (postId) => {
   const input = document.getElementById(`comment-input-${postId}`);
   const body = input.value.trim();
@@ -112,8 +149,21 @@ window.submitComment = async (postId) => {
   const { error } = await supabase.from('comments').insert({ post_id: postId, user_id: currentUser.id, body });
   if (error) return;
   input.value = '';
-  const { data: comments } = await supabase.from('comments').select('*, profiles(username)').eq('post_id', postId).order('created_at');
-  document.getElementById(`comments-${postId}`).innerHTML = (comments||[]).map(c => `<div class="comment-item"><strong>${c.profiles?.username}:</strong> ${c.body}</div>`).join('');
+  const { data: comments } = await supabase
+    .from('comments')
+    .select('*, profiles(username), comment_likes(user_id)')
+    .eq('post_id', postId)
+    .order('created_at');
+  document.getElementById(`comments-${postId}`).innerHTML = (comments || []).map(c => {
+    const cLiked = c.comment_likes?.some(l => l.user_id === currentUser?.id);
+    const cLikeCount = c.comment_likes?.length || 0;
+    return `<div class="comment-item" id="comment-${c.id}">
+      <strong>${c.profiles?.username}:</strong> ${c.body}
+      <button class="comment-like-btn${cLiked ? ' liked' : ''}" onclick="toggleCommentLike('${c.id}', ${cLiked})">
+        ♥ <span id="clikes-${c.id}">${cLikeCount > 0 ? cLikeCount : ''}</span>
+      </button>
+    </div>`;
+  }).join('');
 };
 
 init();

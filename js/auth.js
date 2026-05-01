@@ -1,9 +1,18 @@
 import { supabase } from './supabase.js';
 
-// If already logged in, skip to feed
+// If already logged in, redirect to feed with a brief notice
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) window.location.href = 'feed.html';
+  if (session) {
+    const banner = document.getElementById('alreadyLoggedIn');
+    if (banner) {
+      banner.style.display = 'block';
+      // Give them 3 seconds to see the notice before redirecting
+      setTimeout(() => { window.location.href = 'feed.html'; }, 3000);
+    } else {
+      window.location.href = 'feed.html';
+    }
+  }
 })();
 
 window.showTab = (tab) => {
@@ -31,7 +40,6 @@ window.login = async () => {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    // Friendly messages for common login errors
     if (error.message.includes('Email not confirmed')) {
       msg.innerHTML = '📧 Your email hasn\'t been confirmed yet.<br/>Check your inbox (and spam folder) for a confirmation link.';
     } else if (error.message.includes('Invalid login credentials')) {
@@ -53,7 +61,6 @@ window.signup = async () => {
   const password = document.getElementById('signupPassword').value;
   const msg = document.getElementById('signupMsg');
 
-  // Client-side validation
   if (username.length < 3) {
     msg.textContent = 'Username must be at least 3 characters.';
     msg.className = 'msg error';
@@ -78,7 +85,6 @@ window.signup = async () => {
   msg.textContent = 'Checking availability...';
   msg.className = 'msg';
 
-  // Check if username is already taken before attempting signup
   const { data: existingUser } = await supabase
     .from('profiles')
     .select('username')
@@ -100,8 +106,6 @@ window.signup = async () => {
   });
 
   if (error) {
-    // Supabase returns a generic message for duplicate emails to prevent enumeration.
-    // We surface a helpful message either way.
     if (
       error.message.toLowerCase().includes('already registered') ||
       error.message.toLowerCase().includes('already exists') ||
@@ -115,15 +119,12 @@ window.signup = async () => {
     return;
   }
 
-  // Supabase v2 returns a user but no session when email confirmation is required.
-  // identities being empty means the email is already registered (Supabase security behavior).
   if (data.user && data.user.identities && data.user.identities.length === 0) {
     msg.innerHTML = 'An account with that email already exists.<br/>Please <a href="#" onclick="showTab(\'login\')" style="color:#1877f2">log in</a> instead.';
     msg.className = 'msg error';
     return;
   }
 
-  // Success — email confirmation required
   document.getElementById('signupTab').innerHTML = `
     <div class="confirm-box">
       <div style="font-size:2.5rem;margin-bottom:12px">📧</div>

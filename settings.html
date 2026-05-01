@@ -24,8 +24,11 @@
     <div class="card">
       <h2>Edit Profile</h2>
       <div class="avatar-edit">
-        <img id="currentAvatar" src="https://placehold.co/100" alt="Avatar" />
-        <label for="avatarUpload" class="upload-label">Change Photo</label>
+        <img id="currentAvatar" alt="Avatar" />
+        <div style="display:flex;gap:8px;align-items:center">
+          <label for="avatarUpload" class="upload-label">Change Photo</label>
+          <button type="button" id="removePhotoBtn" class="remove-photo-btn" onclick="removePhoto()" style="display:none">Remove Photo</button>
+        </div>
         <input type="file" id="avatarUpload" accept="image/*" style="display:none" onchange="uploadAvatar(event)" />
       </div>
       <input type="text" id="settingsUsername" placeholder="Username" />
